@@ -1,0 +1,80 @@
+const express = require('express');
+const db = require('./database');
+
+const app = express();
+app.use(express.json());
+
+const PORT = 3000;
+
+app.get('/', (req, res) => {
+  res.json("Registre de personnes! Choisissez le bon routage!");
+});
+
+// GET toutes les personnes
+app.get('/personnes', (req, res) => {
+  db.all("SELECT * FROM personnes", [], (err, rows) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.json({ message: "success", data: rows });
+  });
+});
+
+// GET par ID
+app.get('/personnes/:id', (req, res) => {
+  const id = req.params.id;
+
+  db.get("SELECT * FROM personnes WHERE id = ?", [id], (err, row) => {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+    res.json({ message: "success", data: row });
+  });
+});
+
+// POST créer
+app.post('/personnes', (req, res) => {
+  const nom = req.body.nom;
+
+  db.run(`INSERT INTO personnes (nom) VALUES (?)`, [nom], function (err) {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    res.status(201).json({
+      message: "success",
+      data: { id: this.lastID }
+    });
+  });
+});
+
+// PUT modifier
+app.put('/personnes/:id', (req, res) => {
+  const id = req.params.id;
+  const nom = req.body.nom;
+
+  db.run(`UPDATE personnes SET nom = ? WHERE id = ?`, [nom, id], function (err) {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    res.json({ message: "success" });
+  });
+});
+
+// DELETE
+app.delete('/personnes/:id', (req, res) => {
+  const id = req.params.id;
+
+  db.run(`DELETE FROM personnes WHERE id = ?`, [id], function (err) {
+    if (err) {
+      return res.status(400).json({ error: err.message });
+    }
+
+    res.json({ message: "success" });
+  });
+});
+
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
